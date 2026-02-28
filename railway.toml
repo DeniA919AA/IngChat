@@ -1,0 +1,17 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+
+[[mounts]]
+mountPath = "/app/data"
+name = "ingchat-data"
+
+[[mounts]]
+mountPath = "/app/uploads"
+name = "ingchat-uploads"
