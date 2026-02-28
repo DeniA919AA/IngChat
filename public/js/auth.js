@@ -1,10 +1,9 @@
 /**
- * IngChat — Authentication (login, register, logout)
+ * IngChat — Аутентификация (вход, регистрация, выход)
  */
 
 window.Auth = (() => {
 
-  // ── Helpers ────────────────────────────────────────
   function showError(formId, msg) {
     const el = document.querySelector(`#${formId} .auth-error`);
     if (el) { el.textContent = msg; el.classList.add('show'); }
@@ -19,10 +18,10 @@ window.Auth = (() => {
     const btn = document.getElementById(btnId);
     if (!btn) return;
     btn.disabled = loading;
-    btn.textContent = loading ? 'Please wait…' : btn.dataset.label;
+    btn.textContent = loading ? 'Подождите…' : btn.dataset.label;
   }
 
-  // ── Show / Hide Screens ────────────────────────────
+  // ── Показ экранов ──────────────────────────────────
   function showAuthScreen() {
     document.getElementById('auth-screen').classList.remove('hidden');
     document.getElementById('app').classList.add('hidden');
@@ -43,12 +42,12 @@ window.Auth = (() => {
     btn.innerHTML = App.avatarHtml(App.state.user.avatar, App.state.user.username, 40);
   }
 
-  // ── Tab Switching ──────────────────────────────────
+  // ── Вкладки ────────────────────────────────────────
   function switchTab(tab) {
-    const loginForm  = document.getElementById('login-form');
-    const regForm    = document.getElementById('register-form');
-    const loginTab   = document.getElementById('tab-login');
-    const regTab     = document.getElementById('tab-register');
+    const loginForm = document.getElementById('login-form');
+    const regForm   = document.getElementById('register-form');
+    const loginTab  = document.getElementById('tab-login');
+    const regTab    = document.getElementById('tab-register');
 
     if (tab === 'login') {
       loginForm.classList.remove('hidden');
@@ -63,7 +62,7 @@ window.Auth = (() => {
     }
   }
 
-  // ── Login ──────────────────────────────────────────
+  // ── Вход ───────────────────────────────────────────
   async function login(username, password) {
     clearError('login-form');
     setLoading('login-btn', true);
@@ -78,11 +77,11 @@ window.Auth = (() => {
     }
   }
 
-  // ── Register ───────────────────────────────────────
+  // ── Регистрация ────────────────────────────────────
   async function register(username, password, confirm) {
     clearError('register-form');
     if (password !== confirm) {
-      showError('register-form', 'Passwords do not match');
+      showError('register-form', 'Пароли не совпадают');
       return;
     }
     setLoading('register-btn', true);
@@ -97,54 +96,41 @@ window.Auth = (() => {
     }
   }
 
-  // ── Event Listeners ────────────────────────────────
+  // ── Обработчики событий ────────────────────────────
   function bindEvents() {
-    // Tab buttons
     document.getElementById('tab-login').addEventListener('click', () => switchTab('login'));
     document.getElementById('tab-register').addEventListener('click', () => switchTab('register'));
 
-    // Login form
     document.getElementById('login-form').addEventListener('submit', e => {
       e.preventDefault();
-      const u = document.getElementById('login-username').value;
-      const p = document.getElementById('login-password').value;
-      login(u, p);
+      login(document.getElementById('login-username').value, document.getElementById('login-password').value);
     });
 
-    // Register form
     document.getElementById('register-form').addEventListener('submit', e => {
       e.preventDefault();
-      const u = document.getElementById('reg-username').value;
-      const p = document.getElementById('reg-password').value;
-      const c = document.getElementById('reg-confirm').value;
-      register(u, p, c);
+      register(
+        document.getElementById('reg-username').value,
+        document.getElementById('reg-password').value,
+        document.getElementById('reg-confirm').value
+      );
     });
 
-    // Logout button (in profile modal)
-    document.getElementById('logout-btn')?.addEventListener('click', () => {
-      App.logout();
-    });
-
-    // My avatar → open profile modal
-    document.getElementById('my-avatar-btn').addEventListener('click', () => {
-      openMyProfile();
-    });
+    document.getElementById('logout-btn')?.addEventListener('click', () => App.logout());
+    document.getElementById('my-avatar-btn').addEventListener('click', () => openMyProfile());
   }
 
-  // ── My Profile Modal ───────────────────────────────
+  // ── Мой профиль ────────────────────────────────────
   function openMyProfile() {
     const user = App.state.user;
     if (!user) return;
-
     const modal = document.getElementById('profile-modal');
     modal.querySelector('#profile-modal-name').textContent = user.username;
     modal.querySelector('#profile-modal-bio').value = user.bio || '';
     modal.querySelector('#profile-modal-avatar').innerHTML = App.avatarHtml(user.avatar, user.username, 100);
-
     openModal('profile-modal');
   }
 
-  // ── Modal Helpers ──────────────────────────────────
+  // ── Модальные окна ─────────────────────────────────
   function openModal(id) {
     const overlay = document.getElementById('modal-overlay');
     overlay.classList.remove('hidden');
@@ -157,30 +143,26 @@ window.Auth = (() => {
   }
 
   function bindModalEvents() {
-    // Close on overlay click
     document.getElementById('modal-overlay').addEventListener('click', e => {
       if (e.target === document.getElementById('modal-overlay')) closeModal();
     });
 
-    // Close buttons
     document.querySelectorAll('[data-close-modal]').forEach(btn => {
       btn.addEventListener('click', closeModal);
     });
 
-    // Profile save
     document.getElementById('save-profile-btn')?.addEventListener('click', async () => {
       const bio = document.getElementById('profile-modal-bio').value.trim();
       try {
         await App.api('PUT', '/users/profile/bio', { bio });
         App.state.user.bio = bio;
-        App.showToast('Profile updated', 'success');
+        App.showToast('Профиль обновлён', 'success');
         closeModal();
       } catch (err) {
         App.showToast(err.message, 'error');
       }
     });
 
-    // Profile avatar upload
     document.getElementById('profile-modal-avatar').addEventListener('click', () => {
       document.getElementById('avatar-input').click();
     });
@@ -195,7 +177,7 @@ window.Auth = (() => {
         App.state.user.avatar = avatar;
         document.getElementById('profile-modal-avatar').innerHTML = App.avatarHtml(avatar, App.state.user.username, 100);
         document.getElementById('my-avatar-btn').innerHTML = App.avatarHtml(avatar, App.state.user.username, 40);
-        App.showToast('Avatar updated', 'success');
+        App.showToast('Аватар обновлён', 'success');
       } catch (err) {
         App.showToast(err.message, 'error');
       }
@@ -203,7 +185,6 @@ window.Auth = (() => {
     });
   }
 
-  // Init
   function init() {
     bindEvents();
     bindModalEvents();

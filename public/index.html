@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -15,7 +15,7 @@
 
   <!-- Open Graph -->
   <meta property="og:title" content="IngChat">
-  <meta property="og:description" content="Modern real-time messaging">
+  <meta property="og:description" content="Современный мессенджер">
   <meta property="og:type" content="website">
 
   <link rel="stylesheet" href="/css/style.css">
@@ -33,40 +33,40 @@
     </div>
 
     <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login">Sign In</button>
-      <button class="auth-tab" id="tab-register">Register</button>
+      <button class="auth-tab active" id="tab-login">Войти</button>
+      <button class="auth-tab" id="tab-register">Регистрация</button>
     </div>
 
     <!-- Login Form -->
     <form id="login-form" class="auth-form">
       <div class="auth-error"></div>
       <div class="input-group">
-        <label>Username</label>
-        <input id="login-username" type="text" placeholder="Enter your username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+        <label>Имя пользователя</label>
+        <input id="login-username" type="text" placeholder="Введите имя пользователя" autocomplete="username" autocapitalize="none" spellcheck="false" required>
       </div>
       <div class="input-group">
-        <label>Password</label>
-        <input id="login-password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+        <label>Пароль</label>
+        <input id="login-password" type="password" placeholder="Введите пароль" autocomplete="current-password" required>
       </div>
-      <button id="login-btn" class="auth-btn" type="submit" data-label="Sign In">Sign In</button>
+      <button id="login-btn" class="auth-btn" type="submit" data-label="Войти">Войти</button>
     </form>
 
     <!-- Register Form -->
     <form id="register-form" class="auth-form hidden">
       <div class="auth-error"></div>
       <div class="input-group">
-        <label>Username <span style="color:var(--text-2);font-weight:400">(letters, numbers, _)</span></label>
-        <input id="reg-username" type="text" placeholder="Choose a username" autocomplete="username" autocapitalize="none" spellcheck="false" minlength="3" maxlength="30" required>
+        <label>Имя пользователя <span style="color:var(--text-2);font-weight:400">(буквы, цифры, _)</span></label>
+        <input id="reg-username" type="text" placeholder="Выберите имя пользователя" autocomplete="username" autocapitalize="none" spellcheck="false" minlength="3" maxlength="30" required>
       </div>
       <div class="input-group">
-        <label>Password <span style="color:var(--text-2);font-weight:400">(min. 6 chars)</span></label>
-        <input id="reg-password" type="password" placeholder="Create a password" autocomplete="new-password" minlength="6" required>
+        <label>Пароль <span style="color:var(--text-2);font-weight:400">(мин. 6 символов)</span></label>
+        <input id="reg-password" type="password" placeholder="Придумайте пароль" autocomplete="new-password" minlength="6" required>
       </div>
       <div class="input-group">
-        <label>Confirm Password</label>
-        <input id="reg-confirm" type="password" placeholder="Confirm your password" autocomplete="new-password" minlength="6" required>
+        <label>Подтвердите пароль</label>
+        <input id="reg-confirm" type="password" placeholder="Повторите пароль" autocomplete="new-password" minlength="6" required>
       </div>
-      <button id="register-btn" class="auth-btn" type="submit" data-label="Create Account">Create Account</button>
+      <button id="register-btn" class="auth-btn" type="submit" data-label="Создать аккаунт">Создать аккаунт</button>
     </form>
   </div>
 </div>
@@ -80,15 +80,15 @@
     <!-- ── Sidebar ──────────────────────────────── -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <div class="user-avatar-btn" id="my-avatar-btn" title="My Profile"></div>
+        <div class="user-avatar-btn" id="my-avatar-btn" title="Мой профиль"></div>
         <div class="sidebar-actions">
-          <button class="icon-btn" id="new-group-btn" title="New Group">
+          <button class="icon-btn" id="new-group-btn" title="Новая группа">
             <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3m-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3m0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5m8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5"/></svg>
           </button>
-          <button class="icon-btn" id="new-chat-btn" title="New Chat">
+          <button class="icon-btn" id="new-chat-btn" title="Новый чат">
             <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2m0 14H6l-2 2V4h16z"/><path d="M12 8.5h-1.5V7h-1v1.5H8v1h1.5V11h1V9.5H12zm4 0h-1.5V7h-1v1.5H12v1h1.5V11h1V9.5H16z"/></svg>
           </button>
-          <button class="icon-btn hidden" id="install-btn" title="Install App">
+          <button class="icon-btn hidden" id="install-btn" title="Установить приложение">
             <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7m-8 2V5h2v6h1.17L12 13.17 9.83 11H11m-6 7h14v2H5z"/></svg>
           </button>
         </div>
@@ -97,12 +97,12 @@
       <div class="search-bar">
         <div class="search-input-wrap">
           <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5m-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"/></svg>
-          <input id="search-input" type="text" placeholder="Search conversations">
+          <input id="search-input" type="text" placeholder="Поиск разговоров">
         </div>
       </div>
 
       <div class="conversations-list" id="conversations-list">
-        <div class="conv-item-placeholder">Loading…</div>
+        <div class="conv-item-placeholder">Загрузка…</div>
       </div>
     </aside>
 
@@ -113,7 +113,7 @@
       <div class="empty-state" id="empty-state">
         <div class="empty-state-icon">💬</div>
         <h2>IngChat</h2>
-        <p>Send and receive messages, photos, voice messages and files. Click a conversation or start a new chat.</p>
+        <p>Отправляйте и получайте сообщения, фото, голосовые и файлы. Выберите чат или начните новый.</p>
       </div>
 
       <!-- Active Chat View -->
@@ -121,15 +121,15 @@
 
         <!-- Chat Header -->
         <div class="chat-header">
-          <button class="icon-btn back-btn" id="back-btn" title="Back">
+          <button class="icon-btn back-btn" id="back-btn" title="Назад">
             <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
           </button>
           <div class="chat-header-avatar" id="chat-header-avatar"></div>
           <div class="chat-header-info" id="chat-header-info">
-            <div class="chat-name" id="chat-name">Chat</div>
+            <div class="chat-name" id="chat-name">Чат</div>
             <div class="chat-subtitle" id="chat-subtitle"></div>
           </div>
-          <button class="icon-btn" id="chat-info-btn" title="Info">
+          <button class="icon-btn" id="chat-info-btn" title="Информация">
             <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m1 15h-2v-6h2v6m0-8h-2V7h2v2"/></svg>
           </button>
         </div>
@@ -137,7 +137,7 @@
         <!-- Messages -->
         <div class="messages-container" id="messages-container">
           <div class="load-more-wrap">
-            <button class="load-more-btn hidden" id="load-more-btn">Load older messages</button>
+            <button class="load-more-btn hidden" id="load-more-btn">Загрузить старые сообщения</button>
           </div>
           <div class="messages-list" id="messages-list"></div>
           <div class="typing-indicator hidden" id="typing-indicator"></div>
@@ -146,7 +146,7 @@
         <!-- Input Toolbar -->
         <div class="input-toolbar" id="input-toolbar">
           <!-- Attach button -->
-          <button class="icon-btn" id="attach-btn" title="Attach">
+          <button class="icon-btn" id="attach-btn" title="Прикрепить">
             <svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
           </button>
 
@@ -176,16 +176,16 @@
               </div>
             </div>
 
-            <textarea id="message-input" placeholder="Type a message" rows="1" autocomplete="off"></textarea>
+            <textarea id="message-input" placeholder="Напишите сообщение" rows="1" autocomplete="off"></textarea>
           </div>
 
           <!-- Voice button -->
-          <button class="icon-btn" id="voice-btn" title="Voice message" style="color:var(--text-2)">
+          <button class="icon-btn" id="voice-btn" title="Голосовое сообщение" style="color:var(--text-2)">
             <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3m5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
           </button>
 
           <!-- Send button -->
-          <button class="icon-btn hidden" id="send-btn" title="Send" style="color:var(--accent)">
+          <button class="icon-btn hidden" id="send-btn" title="Отправить" style="color:var(--accent)">
             <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
           </button>
 
@@ -193,11 +193,11 @@
           <div class="recording-ui hidden" id="recording-ui" style="flex:1;align-items:center;gap:12px;padding:0 8px">
             <div class="recording-dot"></div>
             <div class="recording-timer" id="recording-timer">0:00</div>
-            <div class="recording-label">Recording…</div>
-            <button class="icon-btn" id="cancel-recording-btn" title="Cancel" style="color:var(--danger)">
+            <div class="recording-label">Запись…</div>
+            <button class="icon-btn" id="cancel-recording-btn" title="Отмена" style="color:var(--danger)">
               <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
             </button>
-            <button class="icon-btn" id="stop-recording-btn" title="Send" style="color:var(--accent)">
+            <button class="icon-btn" id="stop-recording-btn" title="Отправить" style="color:var(--accent)">
               <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
             </button>
           </div>
@@ -207,11 +207,11 @@
         <div class="attach-menu hidden" id="attach-menu">
           <div class="attach-item" id="attach-image">
             <div class="attach-item-icon" style="background:#9c27b0">🖼️</div>
-            Photo or Video
+            Фото или видео
           </div>
           <div class="attach-item" id="attach-file">
             <div class="attach-item-icon" style="background:#2196f3">📎</div>
-            Document
+            Документ
           </div>
         </div>
       </div><!-- /chat-view -->
@@ -230,15 +230,15 @@
       <button class="icon-btn" data-close-modal>
         <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
       </button>
-      <div class="modal-title">New Chat</div>
+      <div class="modal-title">Новый чат</div>
     </div>
     <div class="modal-body">
       <div class="modal-search">
         <svg style="width:16px;height:16px;fill:var(--text-2)" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5m-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"/></svg>
-        <input id="new-chat-search" type="text" placeholder="Search by username…" autocapitalize="none">
+        <input id="new-chat-search" type="text" placeholder="Поиск по имени пользователя…" autocapitalize="none">
       </div>
       <div class="user-list" id="new-chat-results">
-        <div class="search-empty">Search for users by username</div>
+        <div class="search-empty">Найдите пользователя по имени</div>
       </div>
     </div>
   </div>
@@ -249,30 +249,30 @@
       <button class="icon-btn" data-close-modal>
         <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
       </button>
-      <div class="modal-title">New Group</div>
+      <div class="modal-title">Новая группа</div>
     </div>
     <div class="modal-body">
       <div class="form-field">
-        <label>Group Name *</label>
-        <input id="group-name-input" type="text" placeholder="Enter group name" maxlength="60">
+        <label>Название группы *</label>
+        <input id="group-name-input" type="text" placeholder="Введите название группы" maxlength="60">
       </div>
       <div class="form-field">
-        <label>Description</label>
-        <input id="group-desc-input" type="text" placeholder="Optional description" maxlength="200">
+        <label>Описание</label>
+        <input id="group-desc-input" type="text" placeholder="Необязательное описание" maxlength="200">
       </div>
       <div class="form-field">
-        <label>Add Members</label>
+        <label>Добавить участников</label>
         <div class="modal-search" style="margin-bottom:8px">
           <svg style="width:16px;height:16px;fill:var(--text-2)" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5m-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"/></svg>
-          <input id="group-search" type="text" placeholder="Search users…" autocapitalize="none">
+          <input id="group-search" type="text" placeholder="Поиск пользователей…" autocapitalize="none">
         </div>
         <div class="selected-members" id="group-selected-members"></div>
         <div class="user-list" id="group-search-results"></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="modal-btn secondary" data-close-modal>Cancel</button>
-      <button class="modal-btn primary" id="create-group-btn" disabled>Create Group</button>
+      <button class="modal-btn secondary" data-close-modal>Отмена</button>
+      <button class="modal-btn primary" id="create-group-btn" disabled>Создать группу</button>
     </div>
   </div>
 
@@ -282,21 +282,21 @@
       <button class="icon-btn" data-close-modal>
         <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
       </button>
-      <div class="modal-title">My Profile</div>
+      <div class="modal-title">Мой профиль</div>
     </div>
     <div class="modal-body">
       <div class="profile-avatar-wrap">
-        <div class="profile-avatar-large" id="profile-modal-avatar" title="Change avatar"></div>
+        <div class="profile-avatar-large" id="profile-modal-avatar" title="Изменить аватар"></div>
         <div class="profile-username" id="profile-modal-name"></div>
       </div>
       <div class="profile-section">
-        <div class="profile-label">About / Bio</div>
-        <textarea id="profile-modal-bio" class="profile-bio-input" placeholder="Tell something about yourself…" maxlength="200"></textarea>
+        <div class="profile-label">О себе</div>
+        <textarea id="profile-modal-bio" class="profile-bio-input" placeholder="Расскажите о себе…" maxlength="200"></textarea>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="modal-btn secondary" id="logout-btn" style="color:var(--danger)">Sign Out</button>
-      <button class="modal-btn primary" id="save-profile-btn">Save</button>
+      <button class="modal-btn secondary" id="logout-btn" style="color:var(--danger)">Выйти</button>
+      <button class="modal-btn primary" id="save-profile-btn">Сохранить</button>
     </div>
   </div>
 
@@ -306,7 +306,7 @@
       <button class="icon-btn" data-close-modal>
         <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
       </button>
-      <div class="modal-title">Info</div>
+      <div class="modal-title">Информация</div>
     </div>
     <div class="modal-body">
       <div class="profile-avatar-wrap" style="margin-bottom:16px">
@@ -315,12 +315,12 @@
         <div style="font-size:14px;color:var(--text-2)" id="info-desc"></div>
       </div>
       <div id="info-members-section">
-        <div class="profile-label" style="margin-bottom:8px">Members</div>
+        <div class="profile-label" style="margin-bottom:8px">Участники</div>
         <div class="group-members-list user-list" id="info-members"></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="modal-btn secondary" data-close-modal>Close</button>
+      <button class="modal-btn secondary" data-close-modal>Закрыть</button>
     </div>
   </div>
 
@@ -339,7 +339,7 @@
       <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7m-8 2V5h2v6h1.17L12 13.17 9.83 11H11m-6 7h14v2H5z"/></svg>
     </a>
   </div>
-  <img src="" alt="Image" style="max-width:95vw;max-height:85vh;object-fit:contain;border-radius:6px">
+  <img src="" alt="Изображение" style="max-width:95vw;max-height:85vh;object-fit:contain;border-radius:6px">
 </div>
 
 <!-- ═══════════════════════════════════════════════════

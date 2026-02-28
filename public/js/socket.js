@@ -1,5 +1,5 @@
 /**
- * IngChat — Socket.io client
+ * IngChat — Socket.io клиент
  */
 
 window.SocketClient = (() => {
@@ -11,8 +11,7 @@ window.SocketClient = (() => {
     socket = io({ auth: { token }, transports: ['websocket', 'polling'] });
 
     socket.on('connect', () => {
-      console.log('[Socket] Connected:', socket.id);
-      // Re-fetch online statuses after reconnect
+      console.log('[Socket] Подключено:', socket.id);
       if (App.state.conversations.length) {
         const allUserIds = getAllContactIds();
         if (allUserIds.length) getOnlineStatus(allUserIds);
@@ -20,33 +19,18 @@ window.SocketClient = (() => {
     });
 
     socket.on('disconnect', reason => {
-      console.log('[Socket] Disconnected:', reason);
+      console.log('[Socket] Отключено:', reason);
     });
 
     socket.on('connect_error', err => {
-      console.warn('[Socket] Connection error:', err.message);
+      console.warn('[Socket] Ошибка подключения:', err.message);
     });
 
-    // ── Incoming Events ──────────────────────────────
-    socket.on('new_message', message => {
-      Chat.handleIncomingMessage(message);
-    });
-
-    socket.on('user_typing', ({ userId, username, conversationId, isTyping }) => {
-      Chat.handleTyping(userId, username, conversationId, isTyping);
-    });
-
-    socket.on('messages_read', ({ userId, conversationId, messageIds }) => {
-      Chat.handleMessagesRead(userId, conversationId, messageIds);
-    });
-
-    socket.on('user_status', ({ userId, isOnline, lastSeen }) => {
-      Chat.handleUserStatus(userId, isOnline, lastSeen);
-    });
-
-    socket.on('conversation_updated', ({ conversationId }) => {
-      Chat.loadConversations();
-    });
+    socket.on('new_message',        message => Chat.handleIncomingMessage(message));
+    socket.on('user_typing',        data    => Chat.handleTyping(data.userId, data.username, data.conversationId, data.isTyping));
+    socket.on('messages_read',      data    => Chat.handleMessagesRead(data.userId, data.conversationId, data.messageIds));
+    socket.on('user_status',        data    => Chat.handleUserStatus(data.userId, data.isOnline, data.lastSeen));
+    socket.on('conversation_updated', ()    => Chat.loadConversations());
   }
 
   function disconnect() {
@@ -55,28 +39,17 @@ window.SocketClient = (() => {
 
   function emit(event, data, callback) {
     if (!socket?.connected) {
-      App.showToast('Connection lost. Reconnecting…', 'warn');
+      App.showToast('Соединение потеряно. Переподключение…', 'warn');
       return false;
     }
     socket.emit(event, data, callback);
     return true;
   }
 
-  function sendMessage(data, callback) {
-    return emit('send_message', data, callback);
-  }
-
-  function setTyping(conversationId, isTyping) {
-    emit('typing', { conversationId, isTyping });
-  }
-
-  function markRead(conversationId, messageIds) {
-    if (messageIds.length) emit('mark_read', { conversationId, messageIds });
-  }
-
-  function joinConversation(conversationId) {
-    emit('join_conversation', conversationId);
-  }
+  function sendMessage(data, callback)       { return emit('send_message', data, callback); }
+  function setTyping(conversationId, isTyping) { emit('typing', { conversationId, isTyping }); }
+  function markRead(conversationId, messageIds) { if (messageIds.length) emit('mark_read', { conversationId, messageIds }); }
+  function joinConversation(conversationId)    { emit('join_conversation', conversationId); }
 
   function getOnlineStatus(userIds, callback) {
     if (!socket?.connected) return;

@@ -1,31 +1,29 @@
 /**
- * IngChat — Media: file upload, voice recording, image viewer
+ * IngChat — Медиа: загрузка файлов, запись голосовых
  */
 
 window.Media = (() => {
-  let mediaRecorder = null;
-  let audioChunks   = [];
+  let mediaRecorder  = null;
+  let audioChunks    = [];
   let recordingTimer = null;
   let recordingSeconds = 0;
   let recordingStream = null;
 
-  // ── File Upload ────────────────────────────────────
+  // ── Загрузка файла ─────────────────────────────────
   async function uploadFile(file) {
     const fd = new FormData();
     fd.append('file', file);
-    const data = await App.api('POST', '/messages/upload', fd, true);
-    return data; // { url, name, size, mimetype }
+    return await App.api('POST', '/messages/upload', fd, true);
   }
 
-  // ── Set Pending File ───────────────────────────────
   function setPendingFile(file, uploadResult) {
     App.state.pendingFile = {
       file,
-      url: uploadResult.url,
-      name: uploadResult.name,
-      size: uploadResult.size,
+      url:      uploadResult.url,
+      name:     uploadResult.name,
+      size:     uploadResult.size,
       mimetype: uploadResult.mimetype,
-      type: uploadResult.mimetype?.startsWith('image/') ? 'image' : 'file'
+      type:     uploadResult.mimetype?.startsWith('image/') ? 'image' : 'file'
     };
     showFilePreview(App.state.pendingFile);
   }
@@ -36,46 +34,41 @@ window.Media = (() => {
   }
 
   function showFilePreview(pending) {
-    const bar = document.getElementById('file-preview-bar');
+    const bar   = document.getElementById('file-preview-bar');
     const thumb = bar.querySelector('.file-preview-thumb');
     const name  = bar.querySelector('.file-preview-name');
     const size  = bar.querySelector('.file-preview-size');
 
-    if (pending.type === 'image') {
-      thumb.innerHTML = `<img src="${App.escHtml(pending.url)}" alt="">`;
-    } else {
-      thumb.innerHTML = App.getFileIcon(pending.name, pending.mimetype);
-    }
+    thumb.innerHTML = pending.type === 'image'
+      ? `<img src="${App.escHtml(pending.url)}" alt="">`
+      : App.getFileIcon(pending.name, pending.mimetype);
+
     name.textContent = pending.name;
     size.textContent = App.formatFileSize(pending.size);
     bar.classList.remove('hidden');
   }
 
-  // ── Handle file input (photo / document) ──────────
-  async function handleFileSelect(file, isImage = false) {
+  async function handleFileSelect(file) {
     if (!file) return;
-
-    const maxSize = 50 * 1024 * 1024;
-    if (file.size > maxSize) {
-      App.showToast('File too large (max 50 MB)', 'error');
+    if (file.size > 50 * 1024 * 1024) {
+      App.showToast('Файл слишком большой (макс. 50 МБ)', 'error');
       return;
     }
-
-    App.showToast('Uploading…', 'info', 1500);
+    App.showToast('Загрузка…', 'info', 1500);
     try {
       const result = await uploadFile(file);
       setPendingFile(file, result);
     } catch (err) {
-      App.showToast('Upload failed: ' + err.message, 'error');
+      App.showToast('Ошибка загрузки: ' + err.message, 'error');
     }
   }
 
-  // ── Voice Recording ────────────────────────────────
+  // ── Запись голосового ──────────────────────────────
   async function startRecording() {
     try {
       recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
-      App.showToast('Microphone access denied', 'error');
+      App.showToast('Доступ к микрофону запрещён', 'error');
       return;
     }
 
@@ -83,25 +76,22 @@ window.Media = (() => {
     recordingSeconds = 0;
 
     const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-      ? 'audio/webm;codecs=opus'
-      : 'audio/webm';
+      ? 'audio/webm;codecs=opus' : 'audio/webm';
 
     mediaRecorder = new MediaRecorder(recordingStream, { mimeType });
     mediaRecorder.ondataavailable = e => { if (e.data.size) audioChunks.push(e.data); };
     mediaRecorder.start(200);
 
-    // Show recording UI
     document.getElementById('recording-ui').classList.remove('hidden');
     document.getElementById('voice-btn').classList.add('hidden');
     document.getElementById('attach-btn').classList.add('hidden');
     document.getElementById('input-area').classList.add('hidden');
     document.getElementById('send-btn').classList.add('hidden');
 
-    // Timer
     updateRecordingTimer();
     recordingTimer = setInterval(() => {
       recordingSeconds++;
-      if (recordingSeconds >= 120) stopRecording(); // max 2 min
+      if (recordingSeconds >= 120) stopRecording();
       else updateRecordingTimer();
     }, 1000);
   }
@@ -125,22 +115,19 @@ window.Media = (() => {
 
   async function stopRecording() {
     if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
-
     return new Promise(resolve => {
       mediaRecorder.onstop = async () => {
         hideRecordingUI();
         const blob = new Blob(audioChunks, { type: 'audio/webm' });
         audioChunks = [];
-
-        if (blob.size < 500) { App.showToast('Recording too short', 'warn'); resolve(); return; }
-
+        if (blob.size < 500) { App.showToast('Запись слишком короткая', 'warn'); resolve(); return; }
         const file = new File([blob], `voice_${Date.now()}.webm`, { type: 'audio/webm' });
-        App.showToast('Sending voice message…', 'info', 1500);
+        App.showToast('Отправка голосового…', 'info', 1500);
         try {
           const result = await uploadFile(file);
           Chat.sendVoiceMessage(result);
-        } catch (err) {
-          App.showToast('Failed to send voice message', 'error');
+        } catch {
+          App.showToast('Ошибка отправки голосового', 'error');
         }
         resolve();
       };
@@ -154,7 +141,7 @@ window.Media = (() => {
     hideRecordingUI();
   }
 
-  // ── Image Viewer ───────────────────────────────────
+  // ── Просмотр изображений ───────────────────────────
   function openImageViewer(src, fileName) {
     const viewer = document.getElementById('image-viewer');
     viewer.querySelector('img').src = src;
@@ -168,7 +155,7 @@ window.Media = (() => {
     document.getElementById('image-viewer').classList.add('hidden');
   }
 
-  // ── Voice Waveform ─────────────────────────────────
+  // ── Визуализация голосового ────────────────────────
   function createWaveformBars(count = 30) {
     const bars = [];
     for (let i = 0; i < count; i++) {
@@ -179,12 +166,11 @@ window.Media = (() => {
   }
 
   function bindVoicePlayer(container, audioSrc) {
-    const playBtn  = container.querySelector('.voice-play-btn');
-    const bars     = container.querySelectorAll('.voice-bar');
-    const durEl    = container.querySelector('.voice-duration');
-    const audio    = new Audio(audioSrc);
-
-    let playing = false;
+    const playBtn = container.querySelector('.voice-play-btn');
+    const bars    = container.querySelectorAll('.voice-bar');
+    const durEl   = container.querySelector('.voice-duration');
+    const audio   = new Audio(audioSrc);
+    let playing   = false;
 
     audio.addEventListener('loadedmetadata', () => {
       if (isFinite(audio.duration)) {
@@ -199,8 +185,7 @@ window.Media = (() => {
       const played   = Math.round(progress * bars.length);
       bars.forEach((b, i) => b.classList.toggle('played', i < played));
       const rem = (audio.duration || 0) - audio.currentTime;
-      const m = Math.floor(rem / 60), s = Math.floor(rem % 60);
-      durEl.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+      durEl.textContent = `${Math.floor(rem/60)}:${Math.floor(rem%60).toString().padStart(2,'0')}`;
     });
 
     audio.addEventListener('ended', () => {
@@ -211,43 +196,30 @@ window.Media = (() => {
 
     playBtn.addEventListener('click', () => {
       if (playing) { audio.pause(); playBtn.innerHTML = SVG_PLAY; playing = false; }
-      else         { audio.play(); playBtn.innerHTML = SVG_PAUSE; playing = true; }
+      else         { audio.play();  playBtn.innerHTML = SVG_PAUSE; playing = true; }
     });
 
-    // Click on waveform to seek
     container.querySelector('.voice-waveform').addEventListener('click', e => {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const ratio = (e.clientX - rect.left) / rect.width;
-      audio.currentTime = ratio * (audio.duration || 0);
+      const rect  = e.currentTarget.getBoundingClientRect();
+      audio.currentTime = ((e.clientX - rect.left) / rect.width) * (audio.duration || 0);
     });
   }
 
   const SVG_PLAY  = `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
   const SVG_PAUSE = `<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6zm8-14v14h4V5z"/></svg>`;
 
-  // ── Bind Events ────────────────────────────────────
+  // ── Привязка событий ───────────────────────────────
   function bindEvents() {
-    // Image file input
     document.getElementById('image-input').addEventListener('change', e => {
-      handleFileSelect(e.target.files[0], true);
-      e.target.value = '';
+      handleFileSelect(e.target.files[0]); e.target.value = '';
     });
-
-    // File input
     document.getElementById('file-input').addEventListener('change', e => {
-      handleFileSelect(e.target.files[0], false);
-      e.target.value = '';
+      handleFileSelect(e.target.files[0]); e.target.value = '';
     });
-
-    // Clear file preview
     document.getElementById('file-preview-close')?.addEventListener('click', clearPendingFile);
-
-    // Voice recording buttons
     document.getElementById('voice-btn').addEventListener('click', startRecording);
     document.getElementById('stop-recording-btn').addEventListener('click', stopRecording);
     document.getElementById('cancel-recording-btn').addEventListener('click', cancelRecording);
-
-    // Image viewer
     document.getElementById('image-viewer-close').addEventListener('click', closeImageViewer);
     document.getElementById('image-viewer').addEventListener('click', e => {
       if (e.target === document.getElementById('image-viewer')) closeImageViewer();
@@ -257,8 +229,7 @@ window.Media = (() => {
   document.addEventListener('DOMContentLoaded', bindEvents);
 
   return {
-    uploadFile, handleFileSelect,
-    setPendingFile, clearPendingFile,
+    uploadFile, handleFileSelect, setPendingFile, clearPendingFile,
     startRecording, stopRecording, cancelRecording,
     openImageViewer, closeImageViewer,
     createWaveformBars, bindVoicePlayer,

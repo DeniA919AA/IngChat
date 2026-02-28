@@ -3,23 +3,21 @@
  */
 
 window.App = (() => {
-  // ── Global State ───────────────────────────────────
   const state = {
     user: null,
     token: null,
     conversations: [],
     activeConvId: null,
-    messages: new Map(),       // convId -> message[]
-    typingUsers: new Map(),    // convId -> { userId: username }
+    messages: new Map(),
+    typingUsers: new Map(),
     onlineUsers: new Set(),
-    replyTo: null,             // message being replied to
-    pendingFile: null,         // { file, url, type, name, size }
-    oldestMsgId: new Map(),    // convId -> oldest message id
-    hasMore: new Map(),        // convId -> bool
+    replyTo: null,
+    pendingFile: null,
+    oldestMsgId: new Map(),
+    hasMore: new Map(),
     isGroup: false,
   };
 
-  // ── Avatar Colors ──────────────────────────────────
   const COLORS = [
     '#e57373','#f06292','#ba68c8','#7986cb','#64b5f6',
     '#4db6ac','#81c784','#dce775','#ffb74d','#ff8a65',
@@ -50,11 +48,11 @@ window.App = (() => {
       : String(name).slice(0,2).toUpperCase();
   }
 
-  // ── Formatting ─────────────────────────────────────
+  // ── Форматирование ─────────────────────────────────
   function formatTime(ts) {
     if (!ts) return '';
     const d = new Date(ts.endsWith('Z') ? ts : ts + 'Z');
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   }
 
   function formatDate(ts) {
@@ -63,9 +61,9 @@ window.App = (() => {
     const now = new Date();
     const diff = now - d;
     const oneDay = 86400000;
-    if (diff < oneDay && now.getDate() === d.getDate()) return 'Today';
-    if (diff < 2 * oneDay) return 'Yesterday';
-    return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
+    if (diff < oneDay && now.getDate() === d.getDate()) return 'Сегодня';
+    if (diff < 2 * oneDay) return 'Вчера';
+    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
   }
 
   function formatRelativeTime(ts) {
@@ -75,29 +73,29 @@ window.App = (() => {
     const diff = now - d;
     const oneDay = 86400000;
     if (diff < oneDay && now.getDate() === d.getDate())
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
     if (diff < 7 * oneDay)
-      return d.toLocaleDateString([], { weekday: 'short' });
-    return d.toLocaleDateString([], { day: 'numeric', month: 'numeric' });
+      return d.toLocaleDateString('ru-RU', { weekday: 'short' });
+    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'numeric' });
   }
 
   function formatLastSeen(ts) {
-    if (!ts) return 'last seen a long time ago';
+    if (!ts) return 'давно в сети';
     const d = new Date(ts.endsWith('Z') ? ts : ts + 'Z');
     const now = new Date();
     const diff = now - d;
-    if (diff < 60000) return 'last seen just now';
-    if (diff < 3600000) return `last seen ${Math.floor(diff/60000)}m ago`;
+    if (diff < 60000) return 'только что в сети';
+    if (diff < 3600000) return `${Math.floor(diff/60000)} мин назад`;
     if (diff < 86400000 && now.getDate() === d.getDate())
-      return `last seen today at ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    return `last seen ${d.toLocaleDateString([], { day: 'numeric', month: 'short' })}`;
+      return `сегодня в ${d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`;
+    return `${d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`;
   }
 
   function formatFileSize(bytes) {
     if (!bytes) return '';
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
-    return (bytes/1048576).toFixed(1) + ' MB';
+    if (bytes < 1024) return bytes + ' Б';
+    if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' КБ';
+    return (bytes/1048576).toFixed(1) + ' МБ';
   }
 
   function escHtml(str) {
@@ -120,7 +118,7 @@ window.App = (() => {
     return '📎';
   }
 
-  // ── Toast Notifications ────────────────────────────
+  // ── Уведомления ────────────────────────────────────
   function showToast(message, type = 'info', duration = 3000) {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
@@ -134,7 +132,7 @@ window.App = (() => {
     }, duration);
   }
 
-  // ── API Helper ─────────────────────────────────────
+  // ── API ────────────────────────────────────────────
   async function api(method, path, body, isFormData = false) {
     const headers = {};
     if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
@@ -147,7 +145,7 @@ window.App = (() => {
     });
 
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
+    if (!res.ok) throw new Error(data.error || `Ошибка запроса: ${res.status}`);
     return data;
   }
 
@@ -173,7 +171,6 @@ window.App = (() => {
     });
   }
 
-  // ── Service Worker ─────────────────────────────────
   function registerSW() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(err => {
@@ -182,7 +179,7 @@ window.App = (() => {
     }
   }
 
-  // ── App Init ───────────────────────────────────────
+  // ── Инициализация ──────────────────────────────────
   async function init() {
     registerSW();
     setupInstallBtn();
@@ -223,7 +220,6 @@ window.App = (() => {
     Auth.showAuthScreen();
   }
 
-  // Public API
   return {
     state,
     init, setUser, logout,

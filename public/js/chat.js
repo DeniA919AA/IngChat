@@ -1,35 +1,30 @@
 /**
- * IngChat — Chat: conversations, messages, send, receive
+ * IngChat — Чат: переписки, сообщения, отправка, получение
  */
 
 window.Chat = (() => {
-  let typingTimeout = null;
-  let isLoadingMore = false;
+  let typingTimeout  = null;
+  let isLoadingMore  = false;
 
-  // ─────────────────────────────────────────────────
-  // Init
-  // ─────────────────────────────────────────────────
   function init() {
     loadConversations();
     bindEvents();
   }
 
   // ─────────────────────────────────────────────────
-  // Conversations List
+  // Список переписок
   // ─────────────────────────────────────────────────
   async function loadConversations() {
     try {
       const { conversations } = await App.api('GET', '/messages/conversations');
       App.state.conversations = conversations;
       renderConversationList(conversations);
-
-      // Sync online status for private chats
       const userIds = conversations
         .filter(c => c.type === 'private' && c.other_user_id)
         .map(c => c.other_user_id);
       if (userIds.length) SocketClient.getOnlineStatus(userIds);
-    } catch (err) {
-      App.showToast('Failed to load chats', 'error');
+    } catch {
+      App.showToast('Ошибка загрузки чатов', 'error');
     }
   }
 
@@ -41,7 +36,7 @@ window.Chat = (() => {
 
     if (!filtered.length) {
       list.innerHTML = `<div class="conv-item-placeholder">
-        ${filter ? 'No chats match your search' : 'No conversations yet.<br>Start a new chat!'}
+        ${filter ? 'Чаты не найдены' : 'Чатов пока нет.<br>Начните новый чат!'}
       </div>`;
       return;
     }
@@ -58,13 +53,13 @@ window.Chat = (() => {
     const isActive = conv.id === App.state.activeConvId;
 
     let lastMsg = '';
-    if (conv.last_message_type === 'image') lastMsg = '📷 Photo';
-    else if (conv.last_message_type === 'voice') lastMsg = '🎤 Voice message';
-    else if (conv.last_message_type === 'file') lastMsg = '📎 ' + (conv.last_message || 'File');
+    if      (conv.last_message_type === 'image') lastMsg = '📷 Фото';
+    else if (conv.last_message_type === 'voice') lastMsg = '🎤 Голосовое';
+    else if (conv.last_message_type === 'file')  lastMsg = '📎 ' + (conv.last_message || 'Файл');
     else lastMsg = App.escHtml(conv.last_message || '');
 
     if (conv.last_sender_id === App.state.user?.id && conv.last_message) {
-      lastMsg = `<span style="color:var(--text-3)">You: </span>${lastMsg}`;
+      lastMsg = `<span style="color:var(--text-3)">Вы: </span>${lastMsg}`;
     }
 
     const unread = conv.unread_count > 0;
@@ -77,7 +72,7 @@ window.Chat = (() => {
       </div>
       <div class="conv-info">
         <div class="conv-top">
-          <div class="conv-name">${App.escHtml(conv.name || 'Chat')}</div>
+          <div class="conv-name">${App.escHtml(conv.name || 'Чат')}</div>
           <div class="conv-time${unread ? ' unread' : ''}">${conv.last_message_time ? App.formatRelativeTime(conv.last_message_time) : ''}</div>
         </div>
         <div class="conv-bottom">
@@ -100,10 +95,9 @@ window.Chat = (() => {
   }
 
   // ─────────────────────────────────────────────────
-  // Open Conversation
+  // Открытие переписки
   // ─────────────────────────────────────────────────
   async function openConversation(convId) {
-    // Update active state
     App.state.activeConvId = convId;
     document.querySelectorAll('.conv-item').forEach(el => {
       el.classList.toggle('active', Number(el.dataset.id) === convId);
@@ -111,31 +105,22 @@ window.Chat = (() => {
 
     const conv = App.state.conversations.find(c => c.id === convId);
 
-    // Show chat view
     document.getElementById('empty-state').classList.add('hidden');
     document.getElementById('chat-view').classList.remove('hidden');
-
-    // Mobile: hide sidebar
     document.querySelector('.sidebar').classList.add('hidden-mobile');
 
-    // Update header
     updateChatHeader(conv);
 
-    // Reset and load messages
     App.state.oldestMsgId.delete(convId);
     App.state.hasMore.delete(convId);
 
-    const msgsList = document.getElementById('messages-list');
-    msgsList.innerHTML = `<div style="display:flex;justify-content:center;padding:20px"><div class="spinner"></div></div>`;
+    document.getElementById('messages-list').innerHTML =
+      `<div style="display:flex;justify-content:center;padding:20px"><div class="spinner"></div></div>`;
 
-    // Group chat class
-    document.getElementById('chat-view').classList.toggle(
-      'group-chat', conv?.type === 'group'
-    );
+    document.getElementById('chat-view').classList.toggle('group-chat', conv?.type === 'group');
 
     await loadMessages(convId);
 
-    // Get online status for private chat
     if (conv?.type === 'private' && conv.other_user_id) {
       SocketClient.getOnlineStatus([conv.other_user_id], status => {
         const online = status[conv.other_user_id];
@@ -145,7 +130,6 @@ window.Chat = (() => {
       });
     }
 
-    // Clear unread badge in sidebar
     const c = App.state.conversations.find(x => x.id === convId);
     if (c) { c.unread_count = 0; updateConvItemInList(convId); }
   }
@@ -156,21 +140,20 @@ window.Chat = (() => {
                      App.state.onlineUsers.has(conv.other_user_id);
 
     document.getElementById('chat-header-avatar').innerHTML = App.avatarHtml(conv.avatar, conv.name, 40);
-    document.getElementById('chat-name').textContent = conv.name || 'Chat';
+    document.getElementById('chat-name').textContent = conv.name || 'Чат';
 
     const subtitle = document.getElementById('chat-subtitle');
     if (conv.type === 'private') {
       subtitle.style.color = isOnline ? 'var(--accent)' : 'var(--text-2)';
-      if (isOnline) subtitle.textContent = 'online';
-      else subtitle.textContent = App.formatLastSeen(conv.other_user_last_seen);
+      subtitle.textContent  = isOnline ? 'в сети' : App.formatLastSeen(conv.other_user_last_seen);
     } else {
       subtitle.style.color = 'var(--text-2)';
-      subtitle.textContent = 'tap for group info';
+      subtitle.textContent = 'нажмите для информации';
     }
   }
 
   // ─────────────────────────────────────────────────
-  // Load Messages
+  // Загрузка сообщений
   // ─────────────────────────────────────────────────
   async function loadMessages(convId, loadMore = false) {
     try {
@@ -180,31 +163,22 @@ window.Chat = (() => {
       );
 
       App.state.hasMore.set(convId, hasMore);
-
       if (messages.length) {
         App.state.oldestMsgId.set(convId, messages[0].id);
         const stored = App.state.messages.get(convId) || [];
-        if (loadMore) App.state.messages.set(convId, [...messages, ...stored]);
-        else          App.state.messages.set(convId, messages);
+        App.state.messages.set(convId, loadMore ? [...messages, ...stored] : messages);
       }
 
-      if (loadMore) {
-        prependMessages(convId, messages);
-      } else {
-        renderMessages(convId);
-        scrollToBottom(true);
-      }
+      if (loadMore) prependMessages(convId, messages);
+      else { renderMessages(convId); scrollToBottom(true); }
 
-      // Update load more button
-      const lmBtn = document.getElementById('load-more-btn');
-      lmBtn.classList.toggle('hidden', !hasMore);
+      document.getElementById('load-more-btn').classList.toggle('hidden', !hasMore);
 
-      // Mark as read
       const unreadIds = messages.filter(m => m.sender_id !== App.state.user.id).map(m => m.id);
       if (unreadIds.length) SocketClient.markRead(convId, unreadIds);
 
-    } catch (err) {
-      App.showToast('Failed to load messages', 'error');
+    } catch {
+      App.showToast('Ошибка загрузки сообщений', 'error');
     }
   }
 
@@ -212,7 +186,6 @@ window.Chat = (() => {
     const messages = App.state.messages.get(convId) || [];
     const list = document.getElementById('messages-list');
     list.innerHTML = '';
-
     let lastDate = null;
     for (const msg of messages) {
       const msgDate = App.formatDate(msg.created_at);
@@ -228,9 +201,7 @@ window.Chat = (() => {
   function prependMessages(convId, messages) {
     const list = document.getElementById('messages-list');
     const scrollBottom = list.scrollHeight - list.parentElement.scrollTop;
-    const frag = document.createDocumentFragment();
     const temp = document.createElement('div');
-
     let lastDate = null;
     for (const msg of messages) {
       const msgDate = App.formatDate(msg.created_at);
@@ -240,14 +211,11 @@ window.Chat = (() => {
       }
       temp.insertAdjacentHTML('beforeend', renderMessage(msg, convId));
     }
-
+    const frag = document.createDocumentFragment();
     while (temp.firstChild) frag.appendChild(temp.firstChild);
     list.prepend(frag);
     bindMessageEvents(list);
-
-    // Restore scroll position
-    const container = document.getElementById('messages-container');
-    container.scrollTop = list.scrollHeight - scrollBottom;
+    document.getElementById('messages-container').scrollTop = list.scrollHeight - scrollBottom;
   }
 
   function renderMessage(msg, convId) {
@@ -258,10 +226,13 @@ window.Chat = (() => {
 
     if (msg.reply_to) {
       const rType = msg.reply_type || 'text';
-      const rText = rType === 'image' ? '📷 Photo' : rType === 'file' ? '📎 File' : rType === 'voice' ? '🎤 Voice' : App.escHtml(msg.reply_content || '');
+      const rText = rType === 'image' ? '📷 Фото'
+                  : rType === 'file'  ? '📎 Файл'
+                  : rType === 'voice' ? '🎤 Голосовое'
+                  : App.escHtml(msg.reply_content || '');
       contentHtml += `
         <div class="reply-preview-bubble" data-reply-id="${msg.reply_to}">
-          <div class="reply-author">${App.escHtml(msg.reply_username || 'Unknown')}</div>
+          <div class="reply-author">${App.escHtml(msg.reply_username || 'Неизвестно')}</div>
           <div class="reply-text">${rText}</div>
         </div>`;
     }
@@ -269,7 +240,7 @@ window.Chat = (() => {
     if (msg.type === 'image') {
       contentHtml += `
         <div class="msg-image" data-src="${App.escHtml(msg.file_path)}" data-name="${App.escHtml(msg.file_name || 'image')}">
-          <img src="${App.escHtml(msg.file_path)}" alt="${App.escHtml(msg.file_name || 'Image')}" loading="lazy">
+          <img src="${App.escHtml(msg.file_path)}" alt="${App.escHtml(msg.file_name || 'Фото')}" loading="lazy">
         </div>`;
     } else if (msg.type === 'voice') {
       contentHtml += `
@@ -284,21 +255,19 @@ window.Chat = (() => {
         <div class="msg-file" data-url="${App.escHtml(msg.file_path)}" data-name="${App.escHtml(msg.file_name || 'file')}">
           <div class="msg-file-icon">${App.getFileIcon(msg.file_name, '')}</div>
           <div class="msg-file-info">
-            <div class="msg-file-name">${App.escHtml(msg.file_name || 'File')}</div>
-            <div class="msg-file-size">${App.formatFileSize(msg.file_size)} · tap to download</div>
+            <div class="msg-file-name">${App.escHtml(msg.file_name || 'Файл')}</div>
+            <div class="msg-file-size">${App.formatFileSize(msg.file_size)} · нажмите для скачивания</div>
           </div>
         </div>`;
     } else {
       contentHtml += `<div class="msg-text">${linkify(App.escHtml(msg.content || ''))}</div>`;
     }
 
-    const statusHtml = isSent ? `<span class="msg-status sent-2">✓✓</span>` : '';
-
-    const senderName = !isSent
+    const statusHtml   = isSent ? `<span class="msg-status sent-2">✓✓</span>` : '';
+    const senderName   = !isSent
       ? `<div class="msg-sender-name" style="color:${App.colorForName(msg.sender_username)}">${App.escHtml(msg.sender_username)}</div>`
       : '';
-
-    const avatarHtml = !isSent
+    const avatarHtml   = !isSent
       ? `<div class="msg-avatar">${App.avatarHtml(msg.sender_avatar, msg.sender_username, 28)}</div>`
       : '';
 
@@ -323,30 +292,18 @@ window.Chat = (() => {
   }
 
   function bindMessageEvents(list) {
-    // Images — open viewer
     list.querySelectorAll('.msg-image').forEach(el => {
-      el.addEventListener('click', () => {
-        Media.openImageViewer(el.dataset.src, el.dataset.name);
-      });
+      el.addEventListener('click', () => Media.openImageViewer(el.dataset.src, el.dataset.name));
     });
-
-    // Files — download
     list.querySelectorAll('.msg-file').forEach(el => {
       el.addEventListener('click', () => {
         const a = document.createElement('a');
-        a.href = el.dataset.url;
-        a.download = el.dataset.name;
-        a.click();
+        a.href = el.dataset.url; a.download = el.dataset.name; a.click();
       });
     });
-
-    // Voice messages
     list.querySelectorAll('.msg-voice').forEach(el => {
-      const src = el.querySelector('audio').src;
-      Media.bindVoicePlayer(el, src);
+      Media.bindVoicePlayer(el, el.querySelector('audio').src);
     });
-
-    // Reply preview jump
     list.querySelectorAll('.reply-preview-bubble').forEach(el => {
       el.addEventListener('click', () => {
         const target = list.querySelector(`.message[data-id="${el.dataset.replyId}"]`);
@@ -357,8 +314,6 @@ window.Chat = (() => {
         }
       });
     });
-
-    // Right-click / long-press → reply
     list.querySelectorAll('.msg-bubble').forEach(el => {
       el.addEventListener('contextmenu', e => {
         e.preventDefault();
@@ -369,44 +324,32 @@ window.Chat = (() => {
   }
 
   // ─────────────────────────────────────────────────
-  // Send Message
+  // Отправка сообщения
   // ─────────────────────────────────────────────────
   function sendMessage() {
-    const convId = App.state.activeConvId;
+    const convId  = App.state.activeConvId;
     if (!convId) return;
-
-    const input  = document.getElementById('message-input');
-    const text   = input.value.trim();
+    const input   = document.getElementById('message-input');
+    const text    = input.value.trim();
     const pending = App.state.pendingFile;
-
     if (!text && !pending) return;
 
     if (pending) {
       SocketClient.sendMessage({
-        conversationId: convId,
-        content: text || null,
-        type: pending.type,
-        filePath: pending.url,
-        fileName: pending.name,
-        fileSize: pending.size,
+        conversationId: convId, content: text || null,
+        type: pending.type, filePath: pending.url,
+        fileName: pending.name, fileSize: pending.size,
         replyTo: App.state.replyTo
       });
       Media.clearPendingFile();
     } else {
-      SocketClient.sendMessage({
-        conversationId: convId,
-        content: text,
-        type: 'text',
-        replyTo: App.state.replyTo
-      });
+      SocketClient.sendMessage({ conversationId: convId, content: text, type: 'text', replyTo: App.state.replyTo });
     }
 
     input.value = '';
     input.style.height = 'auto';
     toggleSendVoice();
     clearReply();
-
-    // Stop typing indicator
     SocketClient.setTyping(convId, false);
     clearTimeout(typingTimeout);
   }
@@ -414,72 +357,50 @@ window.Chat = (() => {
   function sendVoiceMessage(uploadResult) {
     const convId = App.state.activeConvId;
     if (!convId) return;
-
     SocketClient.sendMessage({
-      conversationId: convId,
-      content: null,
-      type: 'voice',
-      filePath: uploadResult.url,
-      fileName: uploadResult.name,
-      fileSize: uploadResult.size
+      conversationId: convId, content: null, type: 'voice',
+      filePath: uploadResult.url, fileName: uploadResult.name, fileSize: uploadResult.size
     });
   }
 
   // ─────────────────────────────────────────────────
-  // Incoming Socket Events
+  // Входящие сокет-события
   // ─────────────────────────────────────────────────
   function handleIncomingMessage(msg) {
     const convId = msg.conversation_id;
-
-    // Add to stored messages
     const stored = App.state.messages.get(convId) || [];
     stored.push(msg);
     App.state.messages.set(convId, stored);
 
-    // If this is the active conversation, render
     if (convId === App.state.activeConvId) {
-      const list = document.getElementById('messages-list');
+      const list       = document.getElementById('messages-list');
       const isAtBottom = isScrolledToBottom();
-
-      // Add date divider if needed
-      const lastEl = list.lastElementChild;
-      const lastDate = lastEl?.querySelector('.msg-time') ? App.formatDate(stored[stored.length-2]?.created_at) : null;
-      const newDate  = App.formatDate(msg.created_at);
-      if (lastDate !== newDate) {
+      const lastDate   = stored.length >= 2 ? App.formatDate(stored[stored.length-2]?.created_at) : null;
+      const newDate    = App.formatDate(msg.created_at);
+      if (lastDate !== newDate)
         list.insertAdjacentHTML('beforeend', `<div class="date-divider"><span>${App.escHtml(newDate)}</span></div>`);
-      }
-
       list.insertAdjacentHTML('beforeend', renderMessage(msg, convId));
       bindMessageEvents(list);
-
       if (isAtBottom) scrollToBottom(true);
-
-      // Mark as read
-      if (msg.sender_id !== App.state.user.id) {
-        SocketClient.markRead(convId, [msg.id]);
-      }
+      if (msg.sender_id !== App.state.user.id) SocketClient.markRead(convId, [msg.id]);
     } else {
-      // Increment unread badge
       const conv = App.state.conversations.find(c => c.id === convId);
       if (conv) {
         conv.unread_count = (conv.unread_count || 0) + 1;
-        App.showToast(`${conv.name}: ${msg.type === 'text' ? msg.content : '📷 Media'}`, 'info', 3000);
+        const preview = msg.type === 'text' ? msg.content : msg.type === 'image' ? '📷 Фото' : msg.type === 'voice' ? '🎤 Голосовое' : '📎 Файл';
+        App.showToast(`${conv.name}: ${preview}`, 'info', 3000);
       }
     }
 
-    // Update conversation list
     const conv = App.state.conversations.find(c => c.id === convId);
     if (conv) {
       conv.last_message      = msg.content || msg.file_name || '';
       conv.last_message_type = msg.type;
       conv.last_message_time = msg.created_at;
       conv.last_sender_id    = msg.sender_id;
-
-      // Move to top
       App.state.conversations = [conv, ...App.state.conversations.filter(c => c.id !== convId)];
       renderConversationList(App.state.conversations);
     } else {
-      // New conversation — reload list
       loadConversations().then(() => {
         if (msg.conversation_id) SocketClient.joinConversation(msg.conversation_id);
       });
@@ -488,20 +409,16 @@ window.Chat = (() => {
 
   function handleTyping(userId, username, conversationId, isTyping) {
     if (conversationId !== App.state.activeConvId) return;
-
     const map = App.state.typingUsers.get(conversationId) || {};
-    if (isTyping) map[userId] = username;
-    else          delete map[userId];
+    if (isTyping) map[userId] = username; else delete map[userId];
     App.state.typingUsers.set(conversationId, map);
-
-    const typers = Object.values(map);
+    const typers    = Object.values(map);
     const indicator = document.getElementById('typing-indicator');
-
     if (typers.length) {
       const names = typers.slice(0,2).join(', ');
-      indicator.innerHTML = `
-        <div class="typing-dots"><span></span><span></span><span></span></div>
-        <span>${App.escHtml(names)} ${typers.length === 1 ? 'is' : 'are'} typing</span>`;
+      const verb  = typers.length === 1 ? 'печатает' : 'печатают';
+      indicator.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div>
+        <span>${App.escHtml(names)} ${verb}</span>`;
       indicator.classList.remove('hidden');
     } else {
       indicator.classList.add('hidden');
@@ -512,16 +429,14 @@ window.Chat = (() => {
   function handleMessagesRead(userId, conversationId, messageIds) {
     if (conversationId !== App.state.activeConvId) return;
     messageIds.forEach(id => {
-      const msgEl = document.querySelector(`.message[data-id="${id}"] .msg-status`);
-      if (msgEl) { msgEl.textContent = '✓✓'; msgEl.className = 'msg-status read'; }
+      const el = document.querySelector(`.message[data-id="${id}"] .msg-status`);
+      if (el) { el.textContent = '✓✓'; el.className = 'msg-status read'; }
     });
   }
 
   function handleUserStatus(userId, isOnline, lastSeen) {
     if (isOnline) App.state.onlineUsers.add(userId);
     else          App.state.onlineUsers.delete(userId);
-
-    // Update dot in conversation list
     const conv = App.state.conversations.find(c => c.other_user_id === userId);
     if (conv) {
       conv.other_user_last_seen = lastSeen;
@@ -531,19 +446,18 @@ window.Chat = (() => {
   }
 
   // ─────────────────────────────────────────────────
-  // Reply
+  // Ответ на сообщение
   // ─────────────────────────────────────────────────
   function setReplyTo(msgId) {
     const msg = (App.state.messages.get(App.state.activeConvId) || []).find(m => m.id === msgId);
     if (!msg) return;
     App.state.replyTo = msgId;
-
     const bar = document.getElementById('reply-bar');
     bar.querySelector('.reply-bar-author').textContent = msg.sender_username;
     bar.querySelector('.reply-bar-text').textContent =
-      msg.type === 'image' ? '📷 Photo' :
-      msg.type === 'file'  ? '📎 File'  :
-      msg.type === 'voice' ? '🎤 Voice' : (msg.content || '');
+      msg.type === 'image' ? '📷 Фото' :
+      msg.type === 'file'  ? '📎 Файл' :
+      msg.type === 'voice' ? '🎤 Голосовое' : (msg.content || '');
     bar.classList.remove('hidden');
     document.getElementById('message-input').focus();
   }
@@ -554,7 +468,7 @@ window.Chat = (() => {
   }
 
   // ─────────────────────────────────────────────────
-  // New Chat / Group
+  // Новый чат / группа
   // ─────────────────────────────────────────────────
   async function startPrivateChat(userId) {
     try {
@@ -563,31 +477,25 @@ window.Chat = (() => {
       await loadConversations();
       openConversation(conversationId);
       Auth.closeModal();
-    } catch (err) {
-      App.showToast(err.message, 'error');
-    }
+    } catch (err) { App.showToast(err.message, 'error'); }
   }
 
   async function createGroup(name, description, memberIds) {
     try {
-      const { conversationId } = await App.api('POST', '/messages/conversations/group', {
-        name, description, memberIds
-      });
+      const { conversationId } = await App.api('POST', '/messages/conversations/group', { name, description, memberIds });
       SocketClient.joinConversation(conversationId);
       await loadConversations();
       openConversation(conversationId);
       Auth.closeModal();
-    } catch (err) {
-      App.showToast(err.message, 'error');
-    }
+    } catch (err) { App.showToast(err.message, 'error'); }
   }
 
   // ─────────────────────────────────────────────────
-  // Scroll Helpers
+  // Скролл
   // ─────────────────────────────────────────────────
   function scrollToBottom(smooth = false) {
-    const container = document.getElementById('messages-container');
-    container.scrollTo({ top: container.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+    const c = document.getElementById('messages-container');
+    c.scrollTo({ top: c.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
   }
 
   function isScrolledToBottom() {
@@ -595,35 +503,26 @@ window.Chat = (() => {
     return c.scrollHeight - c.scrollTop - c.clientHeight < 100;
   }
 
-  // ─────────────────────────────────────────────────
-  // UI Helpers
-  // ─────────────────────────────────────────────────
   function toggleSendVoice() {
-    const text = document.getElementById('message-input').value.trim();
-    const hasPending = !!App.state.pendingFile;
-    const hasContent = text.length > 0 || hasPending;
+    const hasContent = document.getElementById('message-input').value.trim().length > 0 || !!App.state.pendingFile;
     document.getElementById('send-btn').classList.toggle('hidden', !hasContent);
     document.getElementById('voice-btn').classList.toggle('hidden', hasContent);
   }
 
   // ─────────────────────────────────────────────────
-  // Bind Events
+  // Обработчики событий
   // ─────────────────────────────────────────────────
   function bindEvents() {
     const input = document.getElementById('message-input');
 
-    // Send on Enter (Shift+Enter = newline)
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     });
 
-    // Auto-resize textarea + toggle send/mic
     input.addEventListener('input', () => {
       input.style.height = 'auto';
       input.style.height = Math.min(input.scrollHeight, 140) + 'px';
       toggleSendVoice();
-
-      // Typing indicator
       if (App.state.activeConvId) {
         SocketClient.setTyping(App.state.activeConvId, true);
         clearTimeout(typingTimeout);
@@ -631,10 +530,8 @@ window.Chat = (() => {
       }
     });
 
-    // Send button
     document.getElementById('send-btn').addEventListener('click', sendMessage);
 
-    // Back button (mobile)
     document.getElementById('back-btn').addEventListener('click', () => {
       App.state.activeConvId = null;
       document.getElementById('chat-view').classList.add('hidden');
@@ -642,12 +539,10 @@ window.Chat = (() => {
       document.querySelector('.sidebar').classList.remove('hidden-mobile');
     });
 
-    // Search input
     document.getElementById('search-input').addEventListener('input', e => {
       renderConversationList(App.state.conversations, e.target.value);
     });
 
-    // Load more messages on scroll
     document.getElementById('messages-container').addEventListener('scroll', e => {
       if (e.target.scrollTop < 60 && !isLoadingMore) {
         const convId = App.state.activeConvId;
@@ -658,7 +553,6 @@ window.Chat = (() => {
       }
     });
 
-    // Load more button
     document.getElementById('load-more-btn').addEventListener('click', () => {
       const convId = App.state.activeConvId;
       if (convId && !isLoadingMore) {
@@ -667,109 +561,77 @@ window.Chat = (() => {
       }
     });
 
-    // New chat button
-    document.getElementById('new-chat-btn').addEventListener('click', () => {
-      openNewChatModal();
-    });
+    document.getElementById('new-chat-btn').addEventListener('click', openNewChatModal);
+    document.getElementById('new-group-btn').addEventListener('click', openNewGroupModal);
+    document.getElementById('chat-info-btn').addEventListener('click', openChatInfo);
+    document.getElementById('chat-header-info').addEventListener('click', openChatInfo);
 
-    // New group button
-    document.getElementById('new-group-btn').addEventListener('click', () => {
-      openNewGroupModal();
-    });
-
-    // Chat info (header click)
-    document.getElementById('chat-info-btn').addEventListener('click', () => {
-      openChatInfo();
-    });
-    document.getElementById('chat-header-info').addEventListener('click', () => {
-      openChatInfo();
-    });
-
-    // Attach button
     document.getElementById('attach-btn').addEventListener('click', e => {
-      e.stopPropagation();
-      toggleAttachMenu();
+      e.stopPropagation(); toggleAttachMenu();
     });
-
     document.getElementById('attach-image').addEventListener('click', () => {
-      document.getElementById('image-input').click();
-      closeAttachMenu();
+      document.getElementById('image-input').click(); closeAttachMenu();
     });
-
     document.getElementById('attach-file').addEventListener('click', () => {
-      document.getElementById('file-input').click();
-      closeAttachMenu();
+      document.getElementById('file-input').click(); closeAttachMenu();
     });
-
-    // Close attach menu on outside click
     document.addEventListener('click', e => {
-      if (!e.target.closest('#attach-btn') && !e.target.closest('#attach-menu')) {
-        closeAttachMenu();
-      }
+      if (!e.target.closest('#attach-btn') && !e.target.closest('#attach-menu')) closeAttachMenu();
     });
 
-    // Reply bar close
     document.getElementById('reply-bar-close').addEventListener('click', clearReply);
   }
 
-  // ─────────────────────────────────────────────────
-  // Attach Menu
-  // ─────────────────────────────────────────────────
-  function toggleAttachMenu() {
-    document.getElementById('attach-menu').classList.toggle('hidden');
-  }
-
-  function closeAttachMenu() {
-    document.getElementById('attach-menu').classList.add('hidden');
-  }
+  function toggleAttachMenu() { document.getElementById('attach-menu').classList.toggle('hidden'); }
+  function closeAttachMenu()  { document.getElementById('attach-menu').classList.add('hidden'); }
 
   // ─────────────────────────────────────────────────
-  // Modals: New Chat
+  // Модал: Новый чат
   // ─────────────────────────────────────────────────
   function openNewChatModal() {
     Auth.openModal('new-chat-modal');
     const searchEl = document.getElementById('new-chat-search');
     const results  = document.getElementById('new-chat-results');
     searchEl.value = '';
-    results.innerHTML = '<div class="search-empty">Search for users by username</div>';
+    results.innerHTML = '<div class="search-empty">Найдите пользователей по имени</div>';
     searchEl.focus();
 
     let debounce;
     searchEl.oninput = () => {
       clearTimeout(debounce);
       const q = searchEl.value.trim();
-      if (!q) { results.innerHTML = '<div class="search-empty">Search for users by username</div>'; return; }
+      if (!q) { results.innerHTML = '<div class="search-empty">Найдите пользователей по имени</div>'; return; }
       debounce = setTimeout(async () => {
         try {
           const { users } = await App.api('GET', `/users/search?q=${encodeURIComponent(q)}`);
-          if (!users.length) { results.innerHTML = '<div class="search-empty">No users found</div>'; return; }
+          if (!users.length) { results.innerHTML = '<div class="search-empty">Пользователи не найдены</div>'; return; }
           results.innerHTML = users.map(u => `
             <div class="user-item" data-id="${u.id}">
               <div class="user-item-avatar">${App.avatarHtml(u.avatar, u.username, 44)}</div>
               <div class="user-item-info">
                 <div class="user-item-name">${App.escHtml(u.username)}</div>
-                <div class="user-item-sub">${App.state.onlineUsers.has(u.id) ? '🟢 Online' : App.formatLastSeen(u.last_seen)}</div>
+                <div class="user-item-sub">${App.state.onlineUsers.has(u.id) ? '🟢 В сети' : App.formatLastSeen(u.last_seen)}</div>
               </div>
             </div>`).join('');
           results.querySelectorAll('.user-item').forEach(el => {
             el.addEventListener('click', () => startPrivateChat(Number(el.dataset.id)));
           });
-        } catch { results.innerHTML = '<div class="search-empty">Error searching</div>'; }
+        } catch { results.innerHTML = '<div class="search-empty">Ошибка поиска</div>'; }
       }, 300);
     };
   }
 
   // ─────────────────────────────────────────────────
-  // Modals: New Group
+  // Модал: Новая группа
   // ─────────────────────────────────────────────────
-  let selectedMembers = new Map(); // id -> { username, avatar }
+  let selectedMembers = new Map();
 
   function openNewGroupModal() {
     selectedMembers.clear();
     Auth.openModal('new-group-modal');
-    document.getElementById('group-name-input').value = '';
-    document.getElementById('group-desc-input').value = '';
-    document.getElementById('group-search').value = '';
+    ['group-name-input','group-desc-input','group-search'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
     document.getElementById('group-search-results').innerHTML = '';
     document.getElementById('group-selected-members').innerHTML = '';
     document.getElementById('create-group-btn').disabled = true;
@@ -802,9 +664,7 @@ window.Chat = (() => {
     results.innerHTML = users.map(u => `
       <div class="user-item" data-id="${u.id}">
         <div class="user-item-avatar">${App.avatarHtml(u.avatar, u.username, 44)}</div>
-        <div class="user-item-info">
-          <div class="user-item-name">${App.escHtml(u.username)}</div>
-        </div>
+        <div class="user-item-info"><div class="user-item-name">${App.escHtml(u.username)}</div></div>
         <input type="checkbox" ${selectedMembers.has(u.id) ? 'checked' : ''}>
       </div>`).join('');
 
@@ -815,8 +675,7 @@ window.Chat = (() => {
         const cb   = el.querySelector('input[type="checkbox"]');
         if (selectedMembers.has(uid)) { selectedMembers.delete(uid); cb.checked = false; }
         else                          { selectedMembers.set(uid, user); cb.checked = true; }
-        renderSelectedMembers();
-        checkGroupReady();
+        renderSelectedMembers(); checkGroupReady();
       });
     });
   }
@@ -829,13 +688,10 @@ window.Chat = (() => {
         <span>${App.escHtml(u.username)}</span>
         <span class="member-chip-remove">×</span>
       </div>`).join('');
-
     container.querySelectorAll('.member-chip').forEach(el => {
       el.querySelector('.member-chip-remove').addEventListener('click', () => {
         selectedMembers.delete(Number(el.dataset.id));
-        renderSelectedMembers();
-        renderGroupSearchResults([...selectedMembers.values()]);
-        checkGroupReady();
+        renderSelectedMembers(); checkGroupReady();
       });
     });
   }
@@ -846,22 +702,17 @@ window.Chat = (() => {
   }
 
   // ─────────────────────────────────────────────────
-  // Chat Info
+  // Информация о чате
   // ─────────────────────────────────────────────────
   async function openChatInfo() {
     const convId = App.state.activeConvId;
     if (!convId) return;
-
     try {
       const { conversation, members } = await App.api('GET', `/messages/conversations/${convId}`);
       const modal = document.getElementById('chat-info-modal');
-
       modal.querySelector('.modal-title').textContent =
-        conversation.type === 'group' ? 'Group Info' : 'Contact Info';
-
-      modal.querySelector('#info-avatar').innerHTML = App.avatarHtml(
-        conversation.avatar, conversation.name, 80
-      );
+        conversation.type === 'group' ? 'Информация о группе' : 'Информация о контакте';
+      modal.querySelector('#info-avatar').innerHTML = App.avatarHtml(conversation.avatar, conversation.name, 80);
       modal.querySelector('#info-name').textContent = conversation.name;
       modal.querySelector('#info-desc').textContent = conversation.description || '';
 
@@ -872,24 +723,20 @@ window.Chat = (() => {
             <div class="user-item-avatar">${App.avatarHtml(m.avatar, m.username, 44)}</div>
             <div class="user-item-info">
               <div class="user-item-name">${App.escHtml(m.username)}</div>
-              <div class="user-item-sub">${m.role === 'admin' ? '⭐ Admin' : 'Member'}</div>
+              <div class="user-item-sub">${m.role === 'admin' ? '⭐ Администратор' : 'Участник'}</div>
             </div>
           </div>`).join('');
         memberList.parentElement.classList.remove('hidden');
       } else {
         memberList.parentElement.classList.add('hidden');
       }
-
       Auth.openModal('chat-info-modal');
-    } catch (err) {
-      App.showToast('Failed to load info', 'error');
-    }
+    } catch { App.showToast('Ошибка загрузки информации', 'error'); }
   }
 
   return {
     init, loadConversations, openConversation,
     handleIncomingMessage, handleTyping, handleMessagesRead, handleUserStatus,
-    sendMessage, sendVoiceMessage,
-    renderConversationList
+    sendMessage, sendVoiceMessage, renderConversationList
   };
 })();
